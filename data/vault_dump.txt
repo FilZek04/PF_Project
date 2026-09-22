@@ -1,0 +1,44 @@
+SAFE{ 29-18-44 }
+SAFE { 30 - 36 - 4 }
+SAFE{16-8-24}
+SAFE{30-7-53}
+SAFE { 20 - 15 - 24 }
+SAFE { 4-17 - 71 }
+SAFE { 27 - 5 - 39 }
+SAFE{4-2-39}
+SAFE { 25-27 - 31 }
+SAFE { 9-17 - 40 }
+SAFE { 8 - 33 - 47 }
+SAFE{11-6-50}
+SAFE{ 11-9-21 }
+SAFE{8-26-16}
+SAFE{32-35-72}
+SAFE { 23-30 - 68 }
+partialSAFE{3-4-}garbage
+SAFE{36-15-54}
+SAFE { 1 - 10 - 66 }
+SAFE markers may contain spaces.
+SAFE{ 12-15-36 }
+SAFE{12-37-18}
+SAFE{1-7-35}
+SAFE { 29-12 - 80 }
+SAFE{20-15-2}
+SAFE { 23 - 19 - 58 }
+SAFE { 22 - 20 - 41 }
+SAFE { 4 - 37 - 22 }
+SAFE{30-4-58}
+SAFE { 34 - 17 - 47 }
+SAFE { 33-18 - 74 }
+SAFE{ 31-33-68 }
+SAFE{5-6-12} maybe
+SAFE { 14-5 - 73 }
+RANDOM DATA BLOCK 0x3f
+SAFE { 21 - 20 - 19 }
+SAFE{17-1-59}
+SAFE{ 16-34-69 }
+SAFE{18-28-19}
+SAFE{19-22-47}
+SAFE{ 35-33-18 }
+SAFE{ 25-24-7 }
+SAFE{ 36-28-35 }
+Telemetry stream initiated.
