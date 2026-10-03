@@ -1,11 +1,12 @@
+import json
 # malware room helper functions 
 
 def parseFile(filepath) :
 
     goodLines,badLines = [], 0
-    with open("proc_tree.json","r", encoding = "utf-8") as f :  
+    with open(filepath,"r", encoding = "utf-8") as f :  
         for line in f : 
-            line.strip()
+            line = line.strip()
             if not line :
                 continue 
             try :  
@@ -21,9 +22,12 @@ def parseFile(filepath) :
 
 def isValid(obj) : 
 
-    expectedKey = {"pid","ppid","cmd"}
+    expected= {"pid" : int, "ppid" : int, "cmd" : str}
     if not isinstance(obj,dict) : 
         return False
-    if set(obj.keys()) != expectedKey : 
+    if obj.keys() != expected.keys() : 
         return False
-    return True
+    return all (
+        isinstance(obj[k],t) and not isinstance(obj[k],bool)
+        for k,t in expected.items()
+    )
