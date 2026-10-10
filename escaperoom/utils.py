@@ -56,7 +56,6 @@ def parseLogs(filepath, pattern):
             if not m:
                 malformedLines += 1
                 continue
-            # the regex only checks the shape; these check the values
             try:
                 datetime.fromisoformat(m["date"])
                 ipaddress.IPv4Address(m["ipv4"])
