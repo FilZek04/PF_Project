@@ -1,6 +1,10 @@
 import json
+from collections import defaultdict,deque
 import ipaddress
 from datetime import datetime
+import shlex
+import os
+import re
 
 # malware room helper functions
 
@@ -34,6 +38,71 @@ def isValid(obj) :
         isinstance(obj[k],t) and not isinstance(obj[k],bool)
         for k,t in expected.items()
     )
+
+def createProcessesGraph(parsedJson) : 
+    children = defaultdict(list)
+    cmd = {}
+    root = None
+    for rec in parsedJson : 
+        children[rec["ppid"]].append(rec["pid"])
+        cmd[rec["pid"]] = rec["cmd"]
+        if rec["ppid"] == 0 : 
+            root = rec["pid"]
+    return children,cmd,root
+
+def is_exfil(command):
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return False
+    if not parts:
+        return False
+    
+    PATTERN = r"[^@\s:]+@[^@\s:]+:\S+"
+
+    program = os.path.basename(parts[0])
+    
+    if program == 'curl' :
+        pairs = list(zip(parts, parts[1:]))
+        return ("-X","POST") in pairs and ("-d","@/tmp/x.tgz") in pairs
+    
+    elif program == 'scp' :
+        return "/tmp/x.tgz" in parts and any(re.fullmatch(PATTERN, p) for p in parts)                                                                  
+
+    return False
+
+def BFS(root,children,is_target) :
+    parent = {root : None}
+    queue = deque([root])
+    while queue : 
+        node = queue.popleft()
+        if is_target(node) :
+            path = []
+            while node is not None : 
+                path.append(node)
+                node = parent[node]
+            return path[::-1]
+        for child in children.get(node,[]) : 
+            if child not in parent : 
+                parent[child] = node
+                queue.append(child)
+    return None
+
+def DFS(node,children,is_target,visited): 
+    visited.add(node)
+    if is_target(node) :
+        return [node]
+    for child in children.get(node,[]):
+        if child not in visited : 
+            result = DFS(child,children,is_target,visited)
+            if result is not None : 
+                return [node] + result
+    return None
+
+
+
+         
+
 
 # Helpers for the SOC Room
 
