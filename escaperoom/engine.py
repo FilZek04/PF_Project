@@ -3,12 +3,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from escaperoom.rooms.base import Room
 from escaperoom.rooms.malware import MalwareRoom
+from escaperoom.rooms.soc import SocRoom
+from escaperoom.rooms.dns import DnsRoom
 
 def build_rooms(data_dir: Path) -> dict[str, Room]:
     return {
         "intro": Room("intro", "You are in the Intro Lobby.\nA terminal blinks in the corner."),
-        "soc": Room("soc", "You enter the SOC Triage Desk."),
-        "dns": Room("dns", "You enter the DNS Closet."),
+        "soc": SocRoom(data_dir),
+        "dns": DnsRoom(data_dir),
         "vault": Room("vault", "You enter the Vault Corridor."),
         "malware": MalwareRoom(data_dir),
         "final": Room("final", "You stand before the Final Gate."),

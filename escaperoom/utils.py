@@ -5,6 +5,8 @@ from datetime import datetime
 import shlex
 import os
 import re
+import base64
+import codecs
 
 # malware room helper functions
 
@@ -139,3 +141,44 @@ def parseLogs(filepath, pattern):
                 inner = failures.setdefault(subnet, {})
                 inner[ip] = inner.get(ip, 0) + 1
     return wellformedLines, malformedLines, failures, samples
+
+# Helpers for the DNS Room
+
+def parseConfig(filepath):
+    """Read key=value lines, skipping # comments.
+
+    Returns (entries, malformedLines) where entries = {key: value},
+    with spaces stripped around keys and values, and malformedLines
+    counts non-comment lines without '='.
+    """
+    entries = {}
+    malformedLines = 0
+    with open(filepath, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            key, sep, value = line.partition("=")
+            if not sep:
+                malformedLines += 1
+                continue
+            entries[key.strip()] = value.strip()
+    return entries, malformedLines
+
+def decodeValue(value):
+    """Decode '<encoding>:<payload>' and return (encoding, text).
+
+    Supports b64 and rot13+b64. Raises ValueError for an unknown
+    encoding, bad Base64, or bytes that are not valid UTF-8.
+    """
+    encoding, sep, payload = value.partition(":")
+    if not sep:
+        raise ValueError(f"no encoding prefix in {value!r}")
+    if encoding == "b64":
+        b64text = payload
+    elif encoding == "rot13+b64":
+        b64text = codecs.decode(payload, "rot13")
+    else:
+        raise ValueError(f"unsupported encoding {encoding!r}")
+    raw = base64.b64decode(b64text, validate=True)
+    return encoding, raw.decode("utf-8")
