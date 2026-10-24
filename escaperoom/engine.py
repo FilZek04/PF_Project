@@ -5,13 +5,14 @@ from escaperoom.rooms.base import Room
 from escaperoom.rooms.malware import MalwareRoom
 from escaperoom.rooms.soc import SocRoom
 from escaperoom.rooms.dns import DnsRoom
+from escaperoom.rooms.vault import VaultRoom
 
 def build_rooms(data_dir: Path) -> dict[str, Room]:
     return {
         "intro": Room("intro", "You are in the Intro Lobby.\nA terminal blinks in the corner."),
         "soc": SocRoom(data_dir),
         "dns": DnsRoom(data_dir),
-        "vault": Room("vault", "You enter the Vault Corridor."),
+        "vault": VaultRoom(data_dir),
         "malware": MalwareRoom(data_dir),
         "final": Room("final", "You stand before the Final Gate."),
     }
