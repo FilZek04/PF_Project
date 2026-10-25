@@ -2,37 +2,38 @@ import re
 from escaperoom.rooms.base import Room
 
 # Regex for matching SAFE{a-b-c} where a, b, c are integers.
-safe_re = re.compile(
+SAFE_RE = re.compile(
     r"SAFE\s*\{\s*(\d+)\s*-\s*(\d+)\s*-\s*(\d+)\s*\}"
 ) 
 
 def solve_vault(path):
     """ Searches vault_dump.txt for SAFE{a-b-c} and returns the values if a + b == c. """
     
+    valid = []
     # open the vault file and read all lines 
     with open(path, 'r', encoding='utf-8') as f:    
         lines = f.readlines()  
         
     # Check each line for a SAFE pattern  
     for line in lines:    
-        match = safe_re.search(line)
         
         # Extract the numbers if a match is found 
-        if match:
+        for match in SAFE_RE.finditer(line):
             a = int(match.group(1))
             b = int(match.group(2))
             c = int(match.group(3))
         
             # Validate the checksum
             if a + b == c:
-                return {
+                valid.append({
                     "TOKEN[SAFE]": f"{a}-{b}-{c}",
                     "EVIDENCE[SAFE].MATCH": f'"{match.group(0)}"',
                     "EVIDENCE[SAFE].CHECK": f"{a}+{b}={c}",
-                }
+                })
     
-    # If no valid SAFE pattern is found, return None
-    return None
+    if len(valid) != 1:
+        raise ValueError(f"expected exactly one valid SAFE code in {path}, found {len(valid)}")
+    return valid[0]
       
     
 
@@ -45,10 +46,6 @@ class VaultRoom(Room):
         # Solve the vault puzzle and update the game state with the SAFE token if successful 
         result = solve_vault(self.data_path)
         
-        # Stop if no valid SAFE code is found
-        if result is None:
-            return ["ACCESS DENIED"]
-        
         # Save the SAFE token 
         state.tokens["SAFE"] = result["TOKEN[SAFE]"]
 
@@ -59,9 +56,9 @@ if __name__ == "__main__":
     for tag, value in solve_vault("data/vault_dump.txt").items():
         print(f"{tag}={value}") 
 
-# Test teh regex and checksum    
-    line = "SAFE{32-35-72}"
-    match = safe_re.search(line)
+# Test the regex and checksum    
+    line = "SAFE{ 6 - 20 - 26 }"
+    match = SAFE_RE.search(line)
     
     if match:
         a = int(match.group(1))
