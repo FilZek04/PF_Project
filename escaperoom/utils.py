@@ -44,13 +44,17 @@ def isValid(obj) :
 def createProcessesGraph(parsedJson) : 
     children = defaultdict(list)
     cmd = {}
-    root = None
-    for rec in parsedJson : 
+    roots = set()
+    for rec in parsedJson :
+        if rec["pid"] in cmd and cmd[rec["pid"]] != rec["cmd"] :
+            raise ValueError(f"inconsistent cmd for pid {rec['pid']}")
         children[rec["ppid"]].append(rec["pid"])
         cmd[rec["pid"]] = rec["cmd"]
-        if rec["ppid"] == 0 : 
-            root = rec["pid"]
-    return children,cmd,root
+        if rec["ppid"] == 0 :
+            roots.add(rec["pid"])
+    if len(roots) != 1 :
+        raise ValueError(f"expected exactly one root process, found {len(roots)}")
+    return children,cmd,roots.pop()
 
 def is_exfil(command):
     try:

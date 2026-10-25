@@ -11,7 +11,10 @@ def main():
     args = parser.parse_args()
 
     transcript = Transcript(args.transcript)
-    engine = Engine(start=args.start, data_dir=args.data, transcript=transcript)
+    try:
+        engine = Engine(start=args.start, data_dir=args.data, transcript=transcript)
+    except ValueError as exc:
+        parser.error(str(exc))
     engine.run()
 
 

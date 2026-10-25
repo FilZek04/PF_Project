@@ -35,15 +35,18 @@ ITEMS = {
 EXITS = {
     "intro": ["soc", "dns", "vault", "malware", "final"],
 }
-DEFAULT_EXITS = ["intro"]
 
 
 class Engine:
     def __init__(self, start: str, data_dir: str, transcript):
-        self.state = GameState(current_room=start)
         self.transcript = transcript
         self.data_dir = Path(data_dir)
+        if not self.data_dir.is_dir():
+            raise ValueError(f"data directory '{data_dir}' not found")
         self.rooms = build_rooms(self.data_dir)
+        if start not in self.rooms:
+            raise ValueError(f"unknown start room '{start}'")
+        self.state = GameState(current_room=start)
         self.commands = {
             "look": self.cmd_look,
             "move": self.cmd_move,
@@ -100,6 +103,10 @@ class Engine:
         except NotImplementedError:
             self.transcript.say("[Game] This room is not built yet.")
             return
+        except (OSError, ValueError, RuntimeError) as exc:
+            self.transcript.say(f"[Game] Could not analyse this room: {exc}")
+            return
+        self.state.inventory.update(self.state.tokens)
         for line in output:
             self.transcript.say(line)
 
@@ -116,10 +123,11 @@ class Engine:
         if not self._require_arg(arg, "move <room>"):
             return
         target = arg.lower()
-        current = self.state.current_room
-        allowed = EXITS.get(current, DEFAULT_EXITS)
-        if target not in allowed:
-            self.transcript.say(f"You can't reach '{target}' from here.")
+        if target not in self.rooms:
+            self.transcript.say(f"There is no room called '{target}'.")
+            return
+        if target == self.state.current_room:
+            self.transcript.say(f"You are already in {target}.")
             return
         self.state.current_room = target
         self.transcript.say(self._describe())
@@ -159,7 +167,11 @@ class Engine:
             "inventory": sorted(self.state.inventory), 
             "tokens": self.state.tokens,
         }
-        Path(arg).write_text(json.dumps(data, indent=2), encoding="utf-8")
+        try:
+            Path(arg).write_text(json.dumps(data, indent=2), encoding="utf-8")
+        except OSError as exc:
+            self.transcript.say(f"Could not save to '{arg}': {exc}")
+            return
         self.transcript.say("[Game] Progress saved.")
 
     def cmd_load(self, arg: str) -> None:
