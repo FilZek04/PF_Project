@@ -7,6 +7,8 @@ import os
 import re
 import base64
 import codecs
+import hmac
+import hashlib
 
 # malware room helper functions
 
@@ -186,3 +188,22 @@ def decodeValue(value):
         raise ValueError(f"unsupported encoding {encoding!r}")
     raw = base64.b64decode(b64text, validate=True)
     return encoding, raw.decode("utf-8")
+
+def parseGate(filepath):
+    entries, _ = parseConfig(filepath)
+    missing = [k for k in ("group_id", "token_order", "hmac_key") if not entries.get(k)]
+    if missing:
+        raise ValueError(f"missing {', '.join(missing)} in {filepath}")
+    order = [name.strip() for name in entries["token_order"].split(",")]
+    if len(order) != 4 or len(set(order)) != 4:
+        raise ValueError(f"token_order must list four different tokens, got {entries['token_order']!r}")
+    return entries["group_id"], order, entries["hmac_key"]
+
+def buildMessage(group_id, order, tokens):
+    missing = [name for name in order if name not in tokens]
+    if missing:
+        raise ValueError(f"the gate stays shut, missing tokens: {', '.join(missing)}")
+    return f"{group_id}|" + "-".join(tokens[name] for name in order)
+
+def computeHmac(key, message):
+    return hmac.new(key.encode("utf-8"), message.encode("utf-8"), hashlib.sha256).hexdigest()
