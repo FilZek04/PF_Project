@@ -148,6 +148,34 @@ def parseLogs(filepath, pattern):
                 inner[ip] = inner.get(ip, 0) + 1
     return wellformedLines, malformedLines, failures, samples
 
+LOG_PATTERN = re.compile(
+    r"(?P<date>\S+) (?P<host>\S+) sshd\[(?P<pid>\d+)\]: (?P<status>Failed|Accepted) password for (?P<user>\S+) from (?P<ipv4>\d+\.\d+\.\d+\.\d+) port (?P<port>\d+) protocol 2"
+)
+
+
+def solve_soc(filepath):
+    """Find the /24 with the most failed logins and build the KEYPAD token.
+
+    Returns {transcript tag: value} for the token and its evidence.
+    """
+    _, malformedLines, failures, samples = parseLogs(filepath, LOG_PATTERN)
+    if not failures:
+        raise ValueError(f"no valid failed logins in {filepath}")
+
+    totals = {subnet: sum(ips.values()) for subnet, ips in failures.items()}
+    top24 = max(totals, key=totals.get)
+    count = totals[top24]
+    top_ip = max(failures[top24], key=failures[top24].get)
+    lastOctet = top_ip.rsplit(".", 1)[1]
+
+    return {
+        "TOKEN[KEYPAD]": f"{lastOctet}{count}",
+        "EVIDENCE[KEYPAD].TOP24": f"{top24}.0/24",
+        "EVIDENCE[KEYPAD].COUNT": count,
+        "EVIDENCE[KEYPAD].SAMPLE": samples[top24],
+        "EVIDENCE[KEYPAD].MALFORMED_SKIPPED": malformedLines,
+    }
+
 # Helpers for the DNS Room
 
 def parseConfig(filepath):
@@ -188,6 +216,65 @@ def decodeValue(value):
         raise ValueError(f"unsupported encoding {encoding!r}")
     raw = base64.b64decode(b64text, validate=True)
     return encoding, raw.decode("utf-8")
+
+def solve_dns(filepath):
+
+    entries, _ = parseConfig(filepath)
+    if "token_tag" not in entries:
+        raise ValueError(f"no token_tag in {filepath}")
+
+    _, tag = decodeValue(entries["token_tag"])
+    key = f"hint{tag}"
+    if key not in entries:
+        raise ValueError(f"token_tag points to missing {key}")
+
+    encoding, sentence = decodeValue(entries[key])
+    token = sentence.rsplit(" ", 1)[-1].removesuffix(".")
+
+    return {
+        "TOKEN[DNS]": token,
+        "EVIDENCE[DNS].KEY": key,
+        "EVIDENCE[DNS].ENCODING": encoding,
+        "EVIDENCE[DNS].DECODED_LINE": sentence,
+    }
+
+# helper functions for vault room
+
+# Regex for matching SAFE{a-b-c} where a, b, c are integers.
+SAFE_RE = re.compile(
+    r"SAFE\s*\{\s*(\d+)\s*-\s*(\d+)\s*-\s*(\d+)\s*\}"
+) 
+
+def solve_vault(path):
+    """ Searches vault_dump.txt for SAFE{a-b-c} and returns the values if a + b == c. """
+    
+    valid = []
+    # open the vault file and read all lines 
+    with open(path, 'r', encoding='utf-8') as f:    
+        lines = f.readlines()  
+        
+    # Check each line for a SAFE pattern  
+    for line in lines:    
+        
+        # Extract the numbers if a match is found 
+        for match in SAFE_RE.finditer(line):
+            a = int(match.group(1))
+            b = int(match.group(2))
+            c = int(match.group(3))
+        
+            # Validate the checksum
+            if a + b == c:
+                valid.append({
+                    "TOKEN[SAFE]": f"{a}-{b}-{c}",
+                    "EVIDENCE[SAFE].MATCH": f'"{match.group(0)}"',
+                    "EVIDENCE[SAFE].CHECK": f"{a}+{b}={c}",
+                })
+    
+    if len(valid) != 1:
+        raise ValueError(f"expected exactly one valid SAFE code in {path}, found {len(valid)}")
+    return valid[0]
+
+# helper functions for final gate
 
 def parseGate(filepath):
     entries, _ = parseConfig(filepath)

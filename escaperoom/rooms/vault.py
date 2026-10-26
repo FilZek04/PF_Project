@@ -1,41 +1,5 @@
-import re
+from escaperoom.utils import solve_vault, SAFE_RE
 from escaperoom.rooms.base import Room
-
-# Regex for matching SAFE{a-b-c} where a, b, c are integers.
-SAFE_RE = re.compile(
-    r"SAFE\s*\{\s*(\d+)\s*-\s*(\d+)\s*-\s*(\d+)\s*\}"
-) 
-
-def solve_vault(path):
-    """ Searches vault_dump.txt for SAFE{a-b-c} and returns the values if a + b == c. """
-    
-    valid = []
-    # open the vault file and read all lines 
-    with open(path, 'r', encoding='utf-8') as f:    
-        lines = f.readlines()  
-        
-    # Check each line for a SAFE pattern  
-    for line in lines:    
-        
-        # Extract the numbers if a match is found 
-        for match in SAFE_RE.finditer(line):
-            a = int(match.group(1))
-            b = int(match.group(2))
-            c = int(match.group(3))
-        
-            # Validate the checksum
-            if a + b == c:
-                valid.append({
-                    "TOKEN[SAFE]": f"{a}-{b}-{c}",
-                    "EVIDENCE[SAFE].MATCH": f'"{match.group(0)}"',
-                    "EVIDENCE[SAFE].CHECK": f"{a}+{b}={c}",
-                })
-    
-    if len(valid) != 1:
-        raise ValueError(f"expected exactly one valid SAFE code in {path}, found {len(valid)}")
-    return valid[0]
-      
-    
 
 class VaultRoom(Room):
     def __init__(self, data_dir):
