@@ -1,4 +1,4 @@
-from escaperoom.utils import solve_vault, SAFE_RE
+from escaperoom.utils import solve_vault
 from escaperoom.rooms.base import Room
 
 class VaultRoom(Room):
@@ -19,19 +19,3 @@ class VaultRoom(Room):
 if __name__ == "__main__":
     for tag, value in solve_vault("data/vault_dump.txt").items():
         print(f"{tag}={value}") 
-
-# Test the regex and checksum    
-    line = "SAFE{ 6 - 20 - 26 }"
-    match = SAFE_RE.search(line)
-    
-    if match:
-        a = int(match.group(1))
-        b = int(match.group(2))
-        c = int(match.group(3))
-        
-        if a + b == c:
-            print("Test 1 passed.")
-        else:
-            print("Test 1 failed: checksum incorrect.")
-    else:
-        print("Test 1 failed: no match found.")

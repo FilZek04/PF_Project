@@ -69,6 +69,8 @@ def is_exfil(command):
     PATTERN = r"[^@\s:]+@[^@\s:]+:\S+"
 
     program = os.path.basename(parts[0])
+    if program in ("sh", "bash") and len(parts) > 2 and parts[1] == "-c":
+        return is_exfil(parts[2])
     
     if program == 'curl' :
         pairs = list(zip(parts, parts[1:]))
