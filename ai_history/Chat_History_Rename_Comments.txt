@@ -1,0 +1,1098 @@
+ ▐▛███▛█   Claude Code v2.1.311
+▝▜██████▀  Opus 5.5 · Claude Pro
+ ▝▝   ▝▝   ~/…/S1/Programming Fundamentals/GroupProject/repo/PF_Project
+
+
+❯ /model                                                                        
+  ⎿  Set model to Opus 5.5 (default) and saved as your default for new sessions
+
+❯ /effort high                                                                  
+  ⎿  Set effort level to high (saved as your default for new sessions):
+     Comprehensive implementation with extensive testing and documentation ·
+     burns fastest — medium handles most tasks
+
+❯ /color 
+  ⎿  Session color set to: cyan
+
+❯ I need you to rename the functions and variables through the entire codebase  
+  to follow the example and explanations contained in @Session1_Introdcution... 
+  (one directory above – to keep untracked). Try to keep the new names as       
+  close as the ones we used already.                                            
+
+  Ran 5 shell commands (ctrl+o to expand)
+
+⏺ Reading the code now to find every name that breaks the notebook's PEP 8 table
+  (snake_case functions/variables, UPPER_CASE constants, PascalCase classes).
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+⏺ Everything already matches the naming table, except I'll keep the library's
+  unittest methods (assertEqual, setUp, etc.) as-is. Applying the renames now.
+
+⏺ Bash(cd "/Users/as/MCYSD/MCYSD/S1/Programming
+      Fundamentals/GroupProject/repo/PF_Project"; cat >
+      /private/tmp/claude-501/-Users-as-MCYSD-MCYSD-S1-Programming-Fundamen…)
+  ⎿  changed escaperoom/utils.py
+     changed escaperoom/rooms/final.py
+     changed escaperoom/rooms/malware.py
+     … +17 lines (ctrl+o to expand)
+  ⎿  Updated escaperoom/rooms/final.py (+4 -4)
+      1 -from escaperoom.utils import parseGate, buildMessage, computeHma
+        -c                                                               
+      1 +from escaperoom.utils import parse_gate, build_message, compute_
+        +hmac                                                            
+      2  from escaperoom.rooms.base import Room
+      3  
+      4  
+     ...
+       8          self.data_path = f"{data_dir}/final_gate.txt"
+       9  
+      10      def solve(self, state):
+      11 -        group_id, order, key = parseGate(self.data_path)       
+      12 -        message = buildMessage(group_id, order, state.tokens)  
+      11 +        group_id, order, key = parse_gate(self.data_path)      
+      12 +        message = build_message(group_id, order, state.tokens) 
+      13          collected = ", ".join(f"{name}={state.tokens[name]}" fo
+          r name in order)
+      14          return [
+      15              f"Collected tokens: {collected}",
+      16              "FINAL_GATE=PENDING",
+      17              f"MSG={message}",
+      18 -            f"HMAC={computeHmac(key, message)}",               
+      18 +            f"HMAC={compute_hmac(key, message)}",              
+      19          ]
+  ⎿  Updated escaperoom/rooms/malware.py (+6 -6)
+      1 -from escaperoom.utils import parseFile, createProcessesGraph, is
+        -_exfil, BFS, DFS                                                
+      1 +from escaperoom.utils import parse_file, create_processes_graph,
+        + is_exfil, bfs, dfs                                             
+      2  from escaperoom.rooms.base import Room
+      3  
+      4  
+     ...
+       8          self.data_path = f"{data_dir}/proc_tree.jsonl"
+       9  
+      10      def solve(self, state):
+      11 -        goodLines, badLines = parseFile(self.data_path)        
+      12 -        children, cmd, root = createProcessesGraph(goodLines)  
+      11 +        good_lines, bad_lines = parse_file(self.data_path)     
+      12 +        children, cmd, root = create_processes_graph(good_lines
+         +)                                                              
+      13  
+      14          def is_target(pid):
+      15              return is_exfil(cmd[pid])
+      16  
+      17 -        bfs_path = BFS(root, children, is_target)              
+      18 -        dfs_path = DFS(root, children, is_target, set())       
+      17 +        bfs_path = bfs(root, children, is_target)              
+      18 +        dfs_path = dfs(root, children, is_target, set())       
+      19  
+      20          if bfs_path != dfs_path:
+      21              raise RuntimeError(f"BFS and DFS disagree: {bfs_pat
+          h} vs {dfs_path}")
+     ...
+      35              f"TOKEN[PID]={pid}",
+      36              f"EVIDENCE[PID].PATH=[{path_text}]",
+      37              f'EVIDENCE[PID].CMD="{cmd[pid]}"',
+      38 -            f"EVIDENCE[PID].MALFORMED_SKIPPED={badLines}",     
+      38 +            f"EVIDENCE[PID].MALFORMED_SKIPPED={bad_lines}",    
+      39          ]
+  ⎿  Updated escaperoom/utils.py (+44 -44)
+      12  
+      13  # malware room helper functions
+      14  
+      15 -def parseFile(filepath) :                                      
+      15 +def parse_file(filepath) :                                     
+      16  
+      17 -    goodLines,badLines = [], 0                                 
+      17 +    good_lines,bad_lines = [], 0                               
+      18      with open(filepath,"r", encoding = "utf-8") as f :  
+      19          for line in f : 
+      20              line = line.strip()
+     ...
+      23              try :  
+      24                  obj = json.loads(line)
+      25              except json.JSONDecodeError : 
+      26 -                badLines += 1                                  
+      26 +                bad_lines += 1                                 
+      27                  continue
+      28 -            if not isValid(obj) :                              
+      29 -                badLines += 1                                  
+      28 +            if not is_valid(obj) :                             
+      29 +                bad_lines += 1                                 
+      30                  continue
+      31 -            goodLines.append(obj)                              
+      32 -        return goodLines,badLines                              
+      31 +            good_lines.append(obj)                             
+      32 +        return good_lines,bad_lines                            
+      33  
+      34 -def isValid(obj) :                                             
+      34 +def is_valid(obj) :                                            
+      35  
+      36      expected= {"pid" : int, "ppid" : int, "cmd" : str}
+      37      if not isinstance(obj,dict) : 
+     ...
+      43          for k,t in expected.items()
+      44      )
+      45  
+      46 -def createProcessesGraph(parsedJson) :                         
+      46 +def create_processes_graph(parsed_json) :                      
+      47      children = defaultdict(list)
+      48      cmd = {}
+      49      roots = set()
+     … 199 more lines (ctrl+o to expand)
+  ⎿  Updated homeworks/oddeven.py (+8 -8)
+      1 -def countLetters(string) :                                      
+      1 +def count_letters(string) :                                     
+      2      # count for how many letters there are (initialized to 0)
+      3      count = 0
+      4      ''' for loop to go trough each character in the string check
+         ing if its
+     ...
+      13  
+      14  # test cases, wrapped as a distinct test file exists.
+      15  if __name__ == "__main__":
+      16 -    print (countLetters("Hello There"))                        
+      17 -    print(countLetters("1"))                                   
+      18 -    print(countLetters("ujfhjsfhje872jfsj34"))                 
+      19 -    print(countLetters("abc"))                                 
+      20 -    print(countLetters(""))                                    
+      21 -    print(countLetters("AbCdEfGh"))                            
+      22 -    print(countLetters("192.0.0.0"))                           
+      16 +    print (count_letters("Hello There"))                       
+      17 +    print(count_letters("1"))                                  
+      18 +    print(count_letters("ujfhjsfhje872jfsj34"))                
+      19 +    print(count_letters("abc"))                                
+      20 +    print(count_letters(""))                                   
+      21 +    print(count_letters("AbCdEfGh"))                           
+      22 +    print(count_letters("192.0.0.0"))                          
+  ⎿  Updated homeworks/test_countLetters.py (+9 -9)
+      1  import unittest
+      2  
+      3 -from oddeven import countLetters                                
+      3 +from oddeven import count_letters                               
+      4  
+      5  
+      6  # Using unittest as it comes preinstalled with Python
+     ...
+       8  class TestCountLetters(unittest.TestCase):
+       9  
+      10      def test_abc(self):
+      11 -        self.assertEqual(countLetters("abc"), "Yes")           
+      11 +        self.assertEqual(count_letters("abc"), "Yes")          
+      12  
+      13      def test_hello_there(self):
+      14 -        self.assertEqual(countLetters("Hello There"), "No")    
+      14 +        self.assertEqual(count_letters("Hello There"), "No")   
+      15  
+      16      def test_single_digit(self):
+      17 -        self.assertEqual(countLetters("1"), "No")              
+      17 +        self.assertEqual(count_letters("1"), "No")             
+      18  
+      19      def test_mixed_letters_and_digits(self):
+      20 -        self.assertEqual(countLetters("ujfhjsfhje872jfsj34"), "
+         -No")                                                           
+      20 +        self.assertEqual(count_letters("ujfhjsfhje872jfsj34"), 
+         +"No")                                                          
+      21  
+      22      def test_empty_string(self):
+      23 -        self.assertEqual(countLetters(""), "No")               
+      23 +        self.assertEqual(count_letters(""), "No")              
+      24  
+      25      def test_one_character(self):
+      26 -        self.assertEqual(countLetters("w"), "Yes")             
+      26 +        self.assertEqual(count_letters("w"), "Yes")            
+      27  
+      28      def test_mixed_capitalized(self):
+      29 -        self.assertEqual(countLetters("AbCdEfGh"), "No")       
+      29 +        self.assertEqual(count_letters("AbCdEfGh"), "No")      
+      30  
+      31      def test_digits_punctuation(self):
+      32 -        self.assertEqual(countLetters("192.0.0.0"), "No")      
+      32 +        self.assertEqual(count_letters("192.0.0.0"), "No")     
+     … 3 more lines (ctrl+o to expand)
+  ⎿  … 4 more files changed
+
+⏺ Bash(cd "/Users/as/MCYSD/MCYSD/S1/Programming
+      Fundamentals/GroupProject/repo/PF_Project"; grep -rn "BFS\|DFS" escaperoom
+      tests README.md | grep -v pycache; git mv ho…)
+  ⎿  escaperoom/rooms/malware.py:21:            raise RuntimeError(f"BFS an
+     d DFS disagree: {bfs_path} vs {dfs_path}")
+     README.md:76:| Malware Lab | `proc_tree.jsonl` | PID | Build a process
+     … +9 lines (ctrl+o to expand)
+  ⎿  Deleted homeworks/test_countLetters.py (+0 -36)
+       1 -import unittest                                                
+       2 -                                                               
+       3 -from oddeven import count_letters                              
+       4 -                                                               
+       5 -                                                               
+       6 -# Using unittest as it comes preinstalled with Python          
+       7 -# Series of basic and edge cases.                              
+       8 -class TestCountLetters(unittest.TestCase):                     
+       9 -                                                               
+      10 -    def test_abc(self):                                        
+      11 -        self.assertEqual(count_letters("abc"), "Yes")          
+      12 -                                                               
+      13 -    def test_hello_there(self):                                
+      14 -        self.assertEqual(count_letters("Hello There"), "No")   
+      15 -                                                               
+      16 -    def test_single_digit(self):                               
+      17 -        self.assertEqual(count_letters("1"), "No")             
+      18 -                                                               
+      19 -    def test_mixed_letters_and_digits(self):                   
+      20 -        self.assertEqual(count_letters("ujfhjsfhje872jfsj34"), 
+         -"No")                                                          
+      21 -                                                               
+      22 -    def test_empty_string(self):                               
+      23 -        self.assertEqual(count_letters(""), "No")              
+      24 -                                                               
+      25 -    def test_one_character(self):                              
+      26 -        self.assertEqual(count_letters("w"), "Yes")            
+      27 -                                                               
+      28 -    def test_mixed_capitalized(self):                          
+      29 -        self.assertEqual(count_letters("AbCdEfGh"), "No")      
+      30 -                                                               
+      31 -    def test_digits_punctuation(self):                         
+      32 -        self.assertEqual(count_letters("192.0.0.0"), "No")     
+      33 -                                                               
+      34 -# Output should be Ran 8 tests in 0.000s OK                    
+      35 -if __name__ == "__main__":                                     
+      36 -    unittest.main()                                            
+  ⎿  Created homeworks/test_count_letters.py (+36 -0)
+       1 +import unittest                                                
+       2 +                                                               
+       3 +from oddeven import count_letters                              
+       4 +                                                               
+       5 +                                                               
+       6 +# Using unittest as it comes preinstalled with Python          
+       7 +# Series of basic and edge cases.                              
+       8 +class TestCountLetters(unittest.TestCase):                     
+       9 +                                                               
+      10 +    def test_abc(self):                                        
+      11 +        self.assertEqual(count_letters("abc"), "Yes")          
+      12 +                                                               
+      13 +    def test_hello_there(self):                                
+      14 +        self.assertEqual(count_letters("Hello There"), "No")   
+      15 +                                                               
+      16 +    def test_single_digit(self):                               
+      17 +        self.assertEqual(count_letters("1"), "No")             
+      18 +                                                               
+      19 +    def test_mixed_letters_and_digits(self):                   
+      20 +        self.assertEqual(count_letters("ujfhjsfhje872jfsj34"), 
+         +"No")                                                          
+      21 +                                                               
+      22 +    def test_empty_string(self):                               
+      23 +        self.assertEqual(count_letters(""), "No")              
+      24 +                                                               
+      25 +    def test_one_character(self):                              
+      26 +        self.assertEqual(count_letters("w"), "Yes")            
+      27 +                                                               
+      28 +    def test_mixed_capitalized(self):                          
+      29 +        self.assertEqual(count_letters("AbCdEfGh"), "No")      
+      30 +                                                               
+      31 +    def test_digits_punctuation(self):                         
+      32 +        self.assertEqual(count_letters("192.0.0.0"), "No")     
+      33 +                                                               
+      34 +# Output should be Ran 8 tests in 0.000s OK                    
+      35 +if __name__ == "__main__":                                     
+      36 +    unittest.main()                                            
+  ⎿  … 1 more file changed
+
+⏺ All 53 project tests and 8 homework tests pass, and no camelCase names are
+  left. Next I'm running the whole game once to confirm the tokens and HMAC
+  haven't changed:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ The output matches the values verified earlier. Updating the learning notes so
+  they use the new names:
+
+⏺ Bash(cd "/Users/as/MCYSD/MCYSD/S1/Programming
+      Fundamentals/GroupProject/repo/PF_Project/.vibe-wise"; cat >> progress.md
+      <<'EOF'…)
+  ⎿  17:- `escaperoom/utils.py`: malware helpers (parse_file, is_valid, cre
+     ate_processes_graph, is_exfil, bfs, dfs); SOC `parse_logs`; DNS `parse
+     _config` + `decode_value` (snake_case since 2026-10-27).
+  ⎿  Updated .vibe-wise/progress.md (+5 -0)
+      61  - Issues reported (no code changed): README stub (deliverable);
+           run.txt in .gitignore; data/* in .gitignore though tracked; __
+          pycache__ not ignored; save/load restores tokens but not eviden
+          ce lines in transcript; bad --transcript path crashes only at q
+          uit; needs Python ≥3.11 (fromisoformat 'Z'); spec-example narra
+          tion/flavour lines absent (optional); all room logic in utils.p
+          y (design question for demo).
+      62  - 2026-10-27 pass 1 "misc fixing" (learner's explicit instructi
+          ons): Claude wrote README draft (for learner review); .gitignor
+          e now __pycache__/, *.pyc, .DS_Store (run.txt + data/* removed)
+          ; spec-example narration + flavour descriptions added to soc/dn
+          s/vault/malware rooms, intro doors on one line, blank line afte
+          r each command (console only). 53 tests pass; 19 tags once each
+           in run.txt. Not committed.
+      63  - PENDING Build checkpoint (learner's room): SOC "Top IP is X (
+          last octet=L)" narration line needs top IP, which solve_soc doe
+          sn't return. Asked learner how to expose it. Pass 2 = design (u
+          tils.py decomposition), pass 3 = ?
+      64 +                                                               
+      65 +## PEP 8 rename pass (2026-10-27)                              
+      66 +- Learner's explicit request: rename functions/variables per Se
+         +ssion 1 notebook §3 (PEP 8 table), keeping names close. Claude 
+         +applied: parseFile→parse_file, isValid→is_valid, createProcesse
+         +sGraph→create_processes_graph, parsedJson→parsed_json, goodLine
+         +s/badLines→good_lines/bad_lines, BFS/DFS→bfs/dfs, local PATTERN
+         +→pattern (is_exfil), parseLogs→parse_logs, malformedLines/wellf
+         +ormedLines→malformed_lines/wellformed_lines, lastOctet→last_oct
+         +et, parseConfig→parse_config, decodeValue→decode_value, b64text
+         +→b64_text, parseGate/buildMessage/computeHmac→parse_gate/build_
+         +message/compute_hmac; homeworks countLetters→count_letters and 
+         +test_countLetters.py→test_count_letters.py (git mv). Classes/co
+         +nstants/modules already compliant; unittest camelCase methods a
+         +re library names.                                              
+      67 +- Verified: 53 tests + 8 homework tests pass; full REPL run giv
+         +es same tokens + HMAC 11a045f0…. Not committed.                
+      68 +- SOC "Top IP" narration Build checkpoint still PENDING (unchan
+         +ged).                                                          
+  ⎿  Updated .vibe-wise/project-map.md (+1 -1)
+      14  - `escaperoom/rooms/base.py` (Filip): `Room(name, description)`
+           with abstract `solve(state)` ("Return a list of output lines")
+          .
+      15  - `GameState` (spec §5): currently in NO file (removed from esc
+          ape.py).
+      16  - `escaperoom/engine.py`, `transcript.py`, `rooms/vault.py`: em
+          pty. Owner unknown.
+      17 -- `escaperoom/utils.py`: malware helpers (parseFile, isValid, c
+         -reateProcessesGraph, is_exfil, BFS, DFS); SOC `parseLogs`; DNS 
+         -`parseConfig` (stub, learner) + `decodeValue`.                 
+      17 +- `escaperoom/utils.py`: malware helpers (parse_file, is_valid,
+         + create_processes_graph, is_exfil, bfs, dfs); SOC `parse_logs`;
+         + DNS `parse_config` + `decode_value` (snake_case since 2026-10-
+         +27).                                                           
+      18  - `rooms/malware.py` (Filip): correct output standalone, but ru
+          ns at import time, hardcoded path, print-only.
+      19  - `rooms/soc.py` (local, uncommitted): `solve_soc(filepath)` → 
+          {tag: value}.
+      20  - `rooms/dns.py` (local, uncommitted): `solve_dns(filepath)` → 
+          {tag: value}; needs parseConfig.
+
+⏺ ---
+
+  ✦ Implementation report: renamed names to PEP 8 style, using the Session 1 
+  notebook's naming table
+
+  I renamed 18 names in camelCase to snake_case and kept each one as close to
+  the old name as I could. Nothing has been committed.
+
+  ┌─────────────────────────┬───────────────────────────┬──────────────────┐
+  │           Old           │            New            │      Where       │
+  ├─────────────────────────┼───────────────────────────┼──────────────────┤
+  │ parseFile, isValid,     │ parse_file, is_valid,     │ utils.py,        │
+  │ createProcessesGraph,   │ create_processes_graph,   │ malware.py,      │
+  │ parsedJson              │ parsed_json               │ test_malware.py  │
+  ├─────────────────────────┼───────────────────────────┼──────────────────┤
+  │ goodLines, badLines     │ good_lines, bad_lines     │ utils.py,        │
+  │                         │                           │ malware.py       │
+  ├─────────────────────────┼───────────────────────────┼──────────────────┤
+  │                         │                           │ utils.py,        │
+  │ BFS, DFS                │ bfs, dfs                  │ malware.py,      │
+  │                         │                           │ test_malware.py  │
+  ├─────────────────────────┼───────────────────────────┼──────────────────┤
+  │ PATTERN (local variable │ pattern                   │ utils.py         │
+  │  inside is_exfil)       │                           │                  │
+  ├─────────────────────────┼───────────────────────────┼──────────────────┤
+  │ parseLogs,              │ parse_logs,               │                  │
+  │ wellformedLines,        │ wellformed_lines,         │ utils.py,        │
+  │ malformedLines,         │ malformed_lines,          │ test_soc.py      │
+  │ lastOctet               │ last_octet                │                  │
+  ├─────────────────────────┼───────────────────────────┼──────────────────┤
+  │ parseConfig,            │ parse_config,             │ utils.py,        │
+  │ decodeValue, b64text    │ decode_value, b64_text    │ test_dns.py      │
+  ├─────────────────────────┼───────────────────────────┼──────────────────┤
+  │ parseGate,              │ parse_gate,               │ utils.py,        │
+  │ buildMessage,           │ build_message,            │ final.py,        │
+  │ computeHmac             │ compute_hmac              │ test_final.py    │
+  ├─────────────────────────┼───────────────────────────┼──────────────────┤
+  │ countLetters,           │ count_letters,            │ homeworks/       │
+  │ test_countLetters.py    │ test_count_letters.py     │                  │
+  └─────────────────────────┴───────────────────────────┴──────────────────┘
+
+  Left unchanged on purpose:
+  - Already compliant: the classes (SocRoom, GameState, …), the constants
+    (LOG_PATTERN, SAFE_RE, TAG_RE, ITEMS, EXITS, TOKENS), the module names and
+    the engine's cmd_* methods.
+  - Not ours to rename: assertEqual, setUp, subTest and addCleanup come from
+    Python's unittest library.
+  - Plain text, not names: "BFS and DFS" in the malware error message and in the
+    README.
+
+  Verification: all 53 project tests and the 8 homework tests pass. A full run
+  of the game gives the same results as before: KEYPAD 21159, DNS relay, SAFE
+  16-8-24, PID 2254, and HMAC 11a045f0….
+
+  Two things to check:
+  - Homework file: I renamed test_countLetters.py with git mv, which already
+    stages the rename. If the homework had to be submitted under the old file
+    name, I can undo it.
+  - The notebook: it is currently in the repo root, not one directory up, and
+    git shows it as untracked. I haven't moved it. Do you want me to move it to
+    GroupProject/repo/ so it can't be committed by accident?
+
+  Your Build checkpoint on the SOC "Top IP" narration line is still open from
+  earlier: how should solve_soc expose the top IP?
+
+✻ Churned for 1m 48s · done 9:43 AM
+
+※ recap: I renamed the escape-room code to the PEP 8 snake_case style from the Session 1 notebook; tests pass and the game output is unchanged. Next, tell me whether to move the notebook one directory up, outside the repo. (disable recaps in /config)
+
+❯ Next pass, add the comments (also follow the advice of the Session 1          
+  notebook). Comment only for where it's necessary (more complex loops, etc.).  
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+⏺ Noted the notebook's comment conventions (explain why, complete sentences,
+  72-character limit, keep comments in sync). Now reading the current files
+  before making edits.
+
+  Read 5 files (ctrl+o to expand)
+
+⏺ Now adding the comments. Section headers, existing comments and docstrings
+  also get fixed to follow the notebook rules:
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 5 lines, removed 1 line
+      10  import hmac
+      11  import hashlib
+      12  
+      13 -# malware room helper functions                                
+      13 +# Helpers for the Malware Room                                 
+      14  
+      15  def parse_file(filepath) :
+      16 +    """Read one JSON record per line, skipping blank lines.    
+      17  
+      18 +    Returns (good_lines, bad_lines): the valid records and the 
+         +number                                                         
+      19 +    of lines that were broken JSON or had the wrong shape.     
+      20 +    """                                                        
+      21      good_lines,bad_lines = [], 0
+      22      with open(filepath,"r", encoding = "utf-8") as f :  
+      23          for line in f : 
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 5 lines, removed 4 lines
+      35              good_lines.append(obj)
+      36          return good_lines,bad_lines
+      37  
+      38 -def is_valid(obj) :                                            
+      39 -                                                               
+      38 +def is_valid(obj) :                                            
+      39 +    """Check the record has exactly pid, ppid (int) and cmd (st
+         +r)."""                                                         
+      40      expected= {"pid" : int, "ppid" : int, "cmd" : str}
+      41 -    if not isinstance(obj,dict) :                              
+      41 +    if not isinstance(obj,dict) :                              
+      42          return False
+      43 -    if obj.keys() != expected.keys() :                         
+      43 +    if obj.keys() != expected.keys() :                         
+      44          return False
+      45 +    # bool is a subclass of int, so True would otherwise pass a
+         +s a pid.                                                       
+      46      return all (
+      47          isinstance(obj[k],t) and not isinstance(obj[k],bool)
+      48          for k,t in expected.items()
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 7 lines, removed 1 line
+      48          for k,t in expected.items()
+      49      )
+      50  
+      51 -def create_processes_graph(parsed_json) :                      
+      51 +def create_processes_graph(parsed_json) :                      
+      52 +    """Build the process tree from the valid records.          
+      53 +                                                               
+      54 +    Returns (children, cmd, root) where children = {ppid: [pids
+         +]},                                                            
+      55 +    cmd = {pid: command} and root is the only process with ppid
+         + 0.                                                            
+      56 +    """                                                        
+      57      children = defaultdict(list)
+      58      cmd = {}
+      59      roots = set()
+      60      for rec in parsed_json :
+      61 +        # A pid may appear twice, but only with the same comman
+         +d.                                                             
+      62          if rec["pid"] in cmd and cmd[rec["pid"]] != rec["cmd"] 
+          :
+      63              raise ValueError(f"inconsistent cmd for pid {rec['p
+          id']}")
+      64          children[rec["ppid"]].append(rec["pid"])
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 8 lines, removed 2 lines
+      70      return children,cmd,roots.pop()
+      71  
+      72  def is_exfil(command):
+      73 +    """Return True if the command uploads /tmp/x.tgz with curl 
+         +or scp."""                                                     
+      74 +    # Split like a shell so quoted arguments stay together; unc
+         +losed                                                          
+      75 +    # quotes raise ValueError, and such a command is not exfilt
+         +ration.                                                        
+      76      try:
+      77          parts = shlex.split(command)
+      78      except ValueError:
+      79          return False
+      80      if not parts:
+      81          return False
+      79 -                                                               
+      82 +                                                               
+      83 +    # Remote scp target, e.g. user@host:path.                  
+      84      pattern = r"[^@\s:]+@[^@\s:]+:\S+"
+      85  
+      86      program = os.path.basename(parts[0])
+      87 +    # Unwrap sh -c '...' and check the command inside the quote
+         +s.                                                             
+      88      if program in ("sh", "bash") and len(parts) > 2 and parts[1
+          ] == "-c":
+      89          return is_exfil(parts[2])
+      85 -                                                               
+      90 +                                                               
+      91      if program == 'curl' :
+      92 +        # Pair each argument with the next one to find flag/val
+         +ue pairs.                                                      
+      93          pairs = list(zip(parts, parts[1:]))
+      94          return ("-X","POST") in pairs and ("-d","@/tmp/x.tgz") 
+          in pairs
+      95      
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 4 lines, removed 1 line
+       99      return False
+      100  
+      101  def bfs(root,children,is_target) :
+      102 +    """Return the shortest path from root to a target, or None
+          +."""                                                          
+      103 +    # parent doubles as the visited set and lets us rebuild th
+          +e path.                                                       
+      104      parent = {root : None}
+      105      queue = deque([root])
+      104 -    while queue :                                             
+      106 +    while queue :                                             
+      107          node = queue.popleft()
+      108          if is_target(node) :
+      109 +            # Walk back up the parents, then reverse so root c
+          +omes first.                                                   
+      110              path = []
+      111              while node is not None : 
+      112                  path.append(node)
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 5 lines, removed 1 line
+      118                  queue.append(child)
+      119      return None
+      120  
+      121 -def dfs(node,children,is_target,visited):                     
+      121 +def dfs(node,children,is_target,visited):                     
+      122 +    """Return a depth-first path from node to a target, or Non
+          +e.                                                            
+      123 +                                                              
+      124 +    visited is shared across the recursion so cycles are not f
+          +ollowed.                                                      
+      125 +    """                                                       
+      126      visited.add(node)
+      127      if is_target(node) :
+      128          return [node]
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 2 lines, removed 1 line
+      129      for child in children.get(node,[]):
+      130          if child not in visited : 
+      131              result = dfs(child,children,is_target,visited)
+      132 -            if result is not None :                           
+      132 +            if result is not None :                           
+      133 +                # Prepend this node to the path found below it
+          +.                                                             
+      134                  return [node] + result
+      135      return None
+      136  
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 3 lines
+      155      samples = {}
+      156      with open(filepath, "r", encoding="utf-8") as f:
+      157          for line in f:
+      158 +            # Strip only the newline: stray spaces must still 
+          +fail.                                                         
+      159              line = line.strip("\n")
+      160              m = pattern.fullmatch(line)
+      161              if not m:
+      162                  malformed_lines += 1
+      163                  continue
+      164 +            # The regex only checks the shape; also check the 
+          +values,                                                       
+      165 +            # e.g. month 13 or an octet above 255.            
+      166              try:
+      167                  datetime.fromisoformat(m["date"])
+      168                  ipaddress.IPv4Address(m["ipv4"])
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 2 lines
+      172              wellformed_lines += 1
+      173              if m["status"] == "Failed":
+      174                  ip = m["ipv4"]
+      175 +                # The /24 subnet is the first three octets.   
+      176                  subnet = ip.rsplit(".", 1)[0]
+      177 +                # setdefault only stores the first failed line
+          + seen.                                                        
+      178                  samples.setdefault(subnet, line)
+      179                  inner = failures.setdefault(subnet, {})
+      180                  inner[ip] = inner.get(ip, 0) + 1
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 1 line
+      180                  inner[ip] = inner.get(ip, 0) + 1
+      181      return wellformed_lines, malformed_lines, failures, sample
+           s
+      182  
+      183 +# One complete sshd line; parse_logs reads date, status and ip
+          +v4.                                                           
+      184  LOG_PATTERN = re.compile(
+      185      r"(?P<date>\S+) (?P<host>\S+) sshd\[(?P<pid>\d+)\]: (?P<st
+           atus>Failed|Accepted) password for (?P<user>\S+) from (?P<ipv4
+           >\d+\.\d+\.\d+\.\d+) port (?P<port>\d+) protocol 2"
+      186  )
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 1 line
+      198      totals = {subnet: sum(ips.values()) for subnet, ips in fai
+           lures.items()}
+      199      top24 = max(totals, key=totals.get)
+      200      count = totals[top24]
+      201 +    # Token = last octet of the top IP in that /24 + the /24 t
+          +otal.                                                         
+      202      top_ip = max(failures[top24], key=failures[top24].get)
+      203      last_octet = top_ip.rsplit(".", 1)[1]
+      204  
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 2 lines
+      226              line = line.strip()
+      227              if not line or line.startswith("#"):
+      228                  continue
+      229 +            # Split at the first '=' only: Base64 values can e
+          +nd in '='.                                                    
+      230              key, sep, value = line.partition("=")
+      231              if not sep:
+      232                  malformed_lines += 1
+      233                  continue
+      234 +            # A repeated key keeps its last value.            
+      235              entries[key.strip()] = value.strip()
+      236      return entries, malformed_lines
+      237  
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 2 lines
+      247      if encoding == "b64":
+      248          b64_text = payload
+      249      elif encoding == "rot13+b64":
+      250 +        # Undo the encodings in reverse order: ROT13 first, th
+          +en Base64.                                                    
+      251          b64_text = codecs.decode(payload, "rot13")
+      252      else:
+      253          raise ValueError(f"unsupported encoding {encoding!r}")
+      254 +    # validate=True rejects characters outside the Base64 alph
+          +abet.                                                         
+      255      raw = base64.b64decode(b64_text, validate=True)
+      256      return encoding, raw.decode("utf-8")
+      257  
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 3 lines
+      256      return encoding, raw.decode("utf-8")
+      257  
+      258  def solve_dns(filepath):
+      259 +    """Decode the hint chosen by token_tag and take its last w
+          +ord.                                                          
+      260  
+      261 +    Returns {transcript tag: value} for the token and its evid
+          +ence.                                                         
+      262 +    """                                                       
+      263      entries, _ = parse_config(filepath)
+      264      if "token_tag" not in entries:
+      265          raise ValueError(f"no token_tag in {filepath}")
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 13 lines, removed 14 lines
+      279          "EVIDENCE[DNS].DECODED_LINE": sentence,
+      280      }
+      281  
+      282 -# helper functions for vault room                             
+      282 +# Helpers for the Vault Room                                  
+      283  
+      284  # Regex for matching SAFE{a-b-c} where a, b, c are integers.
+      285  SAFE_RE = re.compile(
+      286      r"SAFE\s*\{\s*(\d+)\s*-\s*(\d+)\s*-\s*(\d+)\s*\}"
+      287 -)                                                             
+      287 +)                                                             
+      288  
+      289  def solve_vault(path):
+      290 -    """ Searches vault_dump.txt for SAFE{a-b-c} and returns th
+          -e values if a + b == c. """                                   
+      291 -                                                              
+      290 +    """Find the one SAFE{a-b-c} in the dump where a + b == c. 
+      291 +                                                              
+      292 +    Returns {transcript tag: value} for the token and its evid
+          +ence.                                                         
+      293 +    """                                                       
+      294      valid = []
+      293 -    # open the vault file and read all lines                  
+      294 -    with open(path, 'r', encoding='utf-8') as f:              
+      295 -        lines = f.readlines()                                 
+      296 -                                                              
+      297 -    # Check each line for a SAFE pattern                      
+      298 -    for line in lines:                                        
+      299 -                                                              
+      300 -        # Extract the numbers if a match is found             
+      295 +    with open(path, 'r', encoding='utf-8') as f:              
+      296 +        lines = f.readlines()                                 
+      297 +                                                              
+      298 +    for line in lines:                                        
+      299 +                                                              
+      300 +        # finditer, not search: one line can hold several cand
+          +idates.                                                       
+      301          for match in SAFE_RE.finditer(line):
+      302              a = int(match.group(1))
+      303              b = int(match.group(2))
+      304              c = int(match.group(3))
+      305 -                                                              
+      306 -            # Validate the checksum                           
+      305 +                                                              
+      306              if a + b == c:
+      307                  valid.append({
+      308                      "TOKEN[SAFE]": f"{a}-{b}-{c}",
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 2 lines, removed 1 line
+      314          raise ValueError(f"expected exactly one valid SAFE cod
+           e in {path}, found {len(valid)}")
+      315      return valid[0]
+      316  
+      317 -# helper functions for final gate                             
+      317 +# Helpers for the Final Gate                                  
+      318  
+      319  def parse_gate(filepath):
+      320 +    """Return (group_id, token_order as a list, hmac_key).""" 
+      321      entries, _ = parse_config(filepath)
+      322      missing = [k for k in ("group_id", "token_order", "hmac_ke
+           y") if not entries.get(k)]
+      323      if missing:
+
+⏺ Update(escaperoom/utils.py)
+  ⎿  Added 1 line
+      328      return entries["group_id"], order, entries["hmac_key"]
+      329  
+      330  def build_message(group_id, order, tokens):
+      331 +    """Return MSG = group_id|token1-token2-... in token_order.
+          +"""                                                           
+      332      missing = [name for name in order if name not in tokens]
+      333      if missing:
+      334          raise ValueError(f"the gate stays shut, missing tokens
+           : {', '.join(missing)}")
+
+⏺ Update(escaperoom/rooms/vault.py)
+  ⎿  Added 1 line, removed 4 lines
+       7          self.data_path = f"{data_dir}/vault_dump.txt"
+       8  
+       9      def solve(self, state):
+      10 -        # Solve the vault puzzle and update the game state with
+         - the SAFE token if successful                                  
+      10          result = solve_vault(self.data_path)
+      12 -                                                               
+      13 -        # Save the SAFE token                                  
+      11          state.tokens["SAFE"] = result["TOKEN[SAFE]"]
+      12  
+      16 -        # Human-readable lines shown before the tagged transcri
+         -pt lines                                                       
+      13 +        # Human-readable lines shown before the tagged transcri
+         +pt lines.                                                      
+      14          candidate = result["EVIDENCE[SAFE].MATCH"].strip('"')
+      15          narration = [
+      16              "[Room Vault] Scanning dump...",
+
+⏺ Update(escaperoom/rooms/vault.py)
+  ⎿  Added 1 line, removed 1 line
+      20          ]
+      21          return narration + [f"{tag}={value}" for tag, value in 
+          result.items()]
+      22      
+      23 -# Run the file directly for testing                            
+      23 +# Run the file directly for testing.                           
+      24  if __name__ == "__main__":
+      25      for tag, value in solve_vault("data/vault_dump.txt").items(
+          ):
+      26          print(f"{tag}={value}") 
+
+⏺ Update(escaperoom/transcript.py)
+  ⎿  Added 2 lines
+       1  import re
+       2  
+       3 +# Tag prefix such as TOKEN[SAFE]= or EVIDENCE[PID].PATH= (spec 
+         +§6).                                                           
+       4  TAG_RE = re.compile(r"^[A-Z_]+(\[[A-Z0-9]+\])?(\.[A-Z0-9_]+)?="
+          )
+       5  
+       6  
+       7  class Transcript:
+       8 +    """Collect the game output and write run.txt when the game 
+         +ends."""                                                       
+       9  
+      10      def __init__(self, path: str):
+      11          self.path = path
+
+⏺ Update(escaperoom/transcript.py)
+  ⎿  Added 2 lines
+      19          print(text)
+      20          for line in text.splitlines():
+      21              match = TAG_RE.match(line)
+      22 +            # Tags go in a dict so each one is written once, wi
+         +th its                                                         
+      23 +            # latest value, even if a room is inspected again. 
+      24              if match:
+      25                  key = line[:match.end() - 1]
+      26                  self.tags[key] = line[match.end():]
+
+⏺ Update(escaperoom/engine.py)
+  ⎿  Added 1 line
+      88          if handler is None:
+      89              self.transcript.say(f"Unknown command '{verb}'. Typ
+          e 'help'.")
+      90              return True
+      91 +        # Only cmd_quit returns False; the others return None. 
+      92          return handler(arg) is not False
+      93  
+      94      def _describe(self) -> str:
+
+⏺ Update(escaperoom/engine.py)
+  ⎿  Added 1 line
+      110          except (OSError, ValueError, RuntimeError) as exc:
+      111              self.transcript.say(f"[Game] Could not analyse thi
+           s room: {exc}")
+      112              return
+      113 +        # Updating a set with a dict adds its keys: the token 
+          +names.                                                        
+      114          self.state.inventory.update(self.state.tokens)
+      115          for line in output:
+      116              self.transcript.say(line)
+
+⏺ Update(escaperoom/rooms/malware.py)
+  ⎿  Added 1 line
+      17          bfs_path = bfs(root, children, is_target)
+      18          dfs_path = dfs(root, children, is_target, set())
+      19  
+      20 +        # Cross-check: both searches must find the same exfil p
+         +ath.                                                           
+      21          if bfs_path != dfs_path:
+      22              raise RuntimeError(f"BFS and DFS disagree: {bfs_pat
+          h} vs {dfs_path}")
+      23          if not bfs_path:
+
+⏺ Two comments in the tests next. Then I'll check that no comment or docstring
+  line is longer than 72 characters, and run everything again.
+
+  Read 2 files (ctrl+o to expand)
+⏺ Update(tests/test_dns.py)
+  ⎿  Added 1 line
+      52          try:
+      53              _, text = decode_value("b64:" + payload)
+      54          except ValueError:
+      55 +            # Failing to decode also shows it is not plain Base
+         +64.                                                            
+      56              return
+      57          self.assertNotEqual(text, sentence)
+      58  
+
+⏺ Update(tests/test_malware.py)
+  ⎿  Added 1 line
+      101  
+      102  class SearchTests(unittest.TestCase):
+      103      def setUp(self):
+      104 +        # 5 and 6 form a cycle the searches must not get stuck
+          + in.                                                          
+      105          self.children = {1: [2, 5], 2: [3], 3: [4], 5: [6], 6:
+            [5]}
+      106          self.target = lambda pid: pid == 4
+      107  
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ Four lines are over the 72-character limit, plus something unexpected flagged
+  in soc.py. Checking them:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+⏺ I see soc.py was edited by someone else since I last checked—it now builds the
+  "Top IP" narration line with an 88-character comment. I'll wrap that comment
+  along with my four long lines.
+
+⏺ Bash(cd "/Users/as/MCYSD/MCYSD/S1/Programming
+      Fundamentals/GroupProject/repo/PF_Project"; python3 - <<'EOF'
+      import pathlib…)
+  ⎿  OK
+     diff --git a/escaperoom/rooms/soc.py b/escaperoom/rooms/soc.py
+     index 9b244b2..ba4b17a 100644
+     … +33 lines (ctrl+o to expand)
+  ⎿  Updated escaperoom/engine.py (+1 -1)
+      78              self.transcript.write()
+      79  
+      80      def handle(self, line: str) -> bool:
+      81 -        """Dispatch one command. Returns False when the game sh
+         -ould stop."""                                                  
+      81 +        """Dispatch one command. Return False to stop the game.
+         +"""                                                            
+      82          parts = line.strip().split(maxsplit=1)
+      83          if not parts:
+      84              return True
+  ⎿  Updated escaperoom/rooms/soc.py (+2 -1)
+      15          count = result["EVIDENCE[KEYPAD].COUNT"]
+      16          top24 = result["EVIDENCE[KEYPAD].TOP24"]
+      17          state.tokens["KEYPAD"] = token
+      18 -        # KEYPAD = "{L}{COUNT}", so the last octet is the token
+         - without the count digits                                      
+      18 +        # KEYPAD = "{L}{COUNT}", so the last octet is the token
+      19 +        # without the count digits.                            
+      20          last_octet = token[:-len(str(count))]
+      21          top_ip = top24.removesuffix("0/24") + last_octet
+      22          narration = [
+  ⎿  Updated escaperoom/utils.py (+3 -3)
+      70      return children,cmd,roots.pop()
+      71  
+      72  def is_exfil(command):
+      73 -    """Return True if the command uploads /tmp/x.tgz with curl 
+         -or scp."""                                                     
+      73 +    """Return True if curl or scp uploads /tmp/x.tgz."""       
+      74      # Split like a shell so quoted arguments stay together; unc
+          losed
+      75      # quotes raise ValueError, and such a command is not exfilt
+          ration.
+      76      try:
+     ...
+      106      while queue :
+      107          node = queue.popleft()
+      108          if is_target(node) :
+      109 -            # Walk back up the parents, then reverse so root c
+          -omes first.                                                   
+      109 +            # Walk back via parents, then reverse so root come
+          +s first.                                                      
+      110              path = []
+      111              while node is not None : 
+      112                  path.append(node)
+     ...
+      187  
+      188  
+      189  def solve_soc(filepath):
+      190 -    """Find the /24 with the most failed logins and build the 
+          -KEYPAD token.                                                 
+      190 +    """Find the /24 with the most failed logins; build KEYPAD.
+      191  
+      192      Returns {transcript tag: value} for the token and its evid
+           ence.
+      193      """
+
+⏺ Bash(cd "/Users/as/MCYSD/MCYSD/S1/Programming
+      Fundamentals/GroupProject/repo/PF_Project"; printf "move soc\ninspect
+      auth.log\nquit\n" | python3 escape.py --transcrip…)
+  ⎿  Top IP is 203.0.113.211 (last octet=211)
+     Token formed: 21159
+     0
+  ⎿  Updated .vibe-wise/progress.md (+4 -0)
+      65  ## PEP 8 rename pass (2026-10-27)
+      66  - Learner's explicit request: rename functions/variables per Se
+          ssion 1 notebook §3 (PEP 8 table), keeping names close. Claude 
+          applied: parseFile→parse_file, isValid→is_valid, createProcesse
+          sGraph→create_processes_graph, parsedJson→parsed_json, goodLine
+          s/badLines→good_lines/bad_lines, BFS/DFS→bfs/dfs, local PATTERN
+          →pattern (is_exfil), parseLogs→parse_logs, malformedLines/wellf
+          ormedLines→malformed_lines/wellformed_lines, lastOctet→last_oct
+          et, parseConfig→parse_config, decodeValue→decode_value, b64text
+          →b64_text, parseGate/buildMessage/computeHmac→parse_gate/build_
+          message/compute_hmac; homeworks countLetters→count_letters and 
+          test_countLetters.py→test_count_letters.py (git mv). Classes/co
+          nstants/modules already compliant; unittest camelCase methods a
+          re library names.
+      67  - Verified: 53 tests + 8 homework tests pass; full REPL run giv
+          es same tokens + HMAC 11a045f0…. Not committed.
+      68 +                                                               
+      69 +## Comment pass (2026-10-27)                                   
+      70 +- Learner's explicit request: add comments only where necessary
+         +, per notebook §3 "Comments" (self-explanatory code first; expl
+         +ain why; full sentences, capital start; comments/docstrings ≤72
+         + chars; keep comments current). Claude added docstrings to undo
+         +cumented utils helpers + Transcript class, "why" comments on no
+         +n-obvious logic (bool-is-int, shlex, sh -c unwrap, curl pairs, 
+         +bfs parent map/path rebuild, dfs prepend, strip("\n"), shape-vs
+         +-value check, partition at first '=', ROT13-then-b64, validate=
+         +True, finditer, transcript tag dict, handle()/inventory.update)
+         +. Removed redundant comments in vault (teammate code), lowercas
+         +ed section headers fixed. All comment/docstring lines checked ≤
+         +72. 53 tests pass, HMAC unchanged. Not committed.              
+      71 +- soc.py had new uncommitted narration code (Top IP derived by 
+         +slicing count digits off the token) — appears to be the learner
+         +'s answer to the pending SOC Build checkpoint; Claude only wrap
+         +ped its 88-char comment. Not yet discussed with learner.       
+
+⏺ ---
+
+  ✦ Implementation report: comment pass following the notebook's "Comments" 
+  section
+
+  I applied the notebook's rules from §3: code should explain itself first, and
+  a comment explains why. Comments are complete sentences starting with a
+  capital, comments and docstrings stay at 72 characters or less, and comments
+  are kept up to date with the code. Nothing has been committed.
+
+  Added:
+  - Docstrings on the helpers in utils.py that had none: parse_file, is_valid,
+    create_processes_graph, is_exfil, bfs, dfs, solve_dns, parse_gate and
+    build_message. Transcript also got a class docstring. Most of them say what
+    the function returns, because several return tuples or dicts that aren't
+    obvious from the name. I left compute_hmac without one because it is a
+    single line that explains itself.
+  - "Why" comments only on logic that isn't obvious:
+    - Malware: bool counts as an int, so True would otherwise pass as a pid.
+      Also covered: shlex and unclosed quotes, unwrapping sh -c, pairing curl
+      flags with their values, how bfs uses its parent map and rebuilds the
+      path, and how dfs builds its path.
+    - SOC: why only the newline is stripped, and that the regex checks the shape
+      of a line while the values (date, IP) are checked separately.
+    - DNS: why the split happens at the first = (Base64 can end in =), that a
+      repeated key keeps its last value, that ROT13 is undone before Base64, and
+      what validate=True does.
+    - Vault: why finditer is used: one line can hold several candidates.
+    - Engine and transcript: why tags are stored in a dict (each one is written
+      once), why handle() checks is not False, and that inventory.update(tokens)
+      adds the token names.
+    - Tests: two short notes, on the cycle in the BFS/DFS test graph and on the
+      early return in a DNS test.
+
+  Fixed in existing comments:
+  - The lowercase section headers are now consistent, for example # Helpers for 
+    the Vault Room.
+  - The solve_vault docstring is wrapped to fit 72 characters.
+  - I removed 3 comments in the vault room helper and 2 in vault.py that only
+    repeated the code (e.g. # Save the SAFE token), and shortened one that was
+    too long. That is a teammate's code, so check with them if they want those
+    comments kept.
+
+  Not touched: homeworks/. Let me know if you want the same pass there.
+
+  Verification: a script confirmed that every comment and docstring line is now
+  72 characters or less. All 53 tests pass, and a full run of the game still
+  gives HMAC 11a045f0….
+
+  Your SOC change: soc.py had new code for the "Top IP" line, which looks like
+  your answer to the open Build checkpoint. I only wrapped its 88-character
+  comment over two lines. In the game it prints Top IP is 203.0.113.211 (last 
+  octet=211), which is correct. It works out the IP by cutting the count's
+  digits off the end of the token. That depends on the token keeping the exact
+  format {last octet}{count}. Why did you choose that over having solve_soc
+  return the top IP directly?
+
+✻ Cogitated for 2m 56s · done 2:02 PM
+
+※ recap: You're bringing the escape-room code in line with the Session 1 notebook's style rules; the renames and comments are done, and all tests pass. Next, tell me why your soc.py change works out the top IP from the token instead of having solve_soc return it. (disable recaps in /config)
