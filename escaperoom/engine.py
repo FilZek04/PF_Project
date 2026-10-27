@@ -63,6 +63,7 @@ class Engine:
 
     def run(self) -> None:
         self.transcript.say("[Game] Cyber Escape Room started. Type 'help' for commands.")
+        print()
         try:
             while True:
                 try:
@@ -72,11 +73,12 @@ class Engine:
                 self.transcript.echo(line)
                 if not self.handle(line):
                     break
+                print()
         finally:
             self.transcript.write()
 
     def handle(self, line: str) -> bool:
-        """Dispatch one command. Returns False when the game should stop."""
+        """Dispatch one command. Return False to stop the game."""
         parts = line.strip().split(maxsplit=1)
         if not parts:
             return True
@@ -86,6 +88,7 @@ class Engine:
         if handler is None:
             self.transcript.say(f"Unknown command '{verb}'. Type 'help'.")
             return True
+        # Only cmd_quit returns False; the others return None.
         return handler(arg) is not False
 
     def _describe(self) -> str:
@@ -94,7 +97,7 @@ class Engine:
         if name in ITEMS:
             lines.append(f"Items here: {ITEMS[name]}")
         if name == "intro":
-            lines.append("Doors lead to: " + ", ".join(EXITS["intro"]))
+            lines[-1] += " Doors lead to: " + ", ".join(EXITS["intro"]) + "."
         return "\n".join(lines)
 
     def _solve_current(self) -> None:
@@ -107,6 +110,7 @@ class Engine:
         except (OSError, ValueError, RuntimeError) as exc:
             self.transcript.say(f"[Game] Could not analyse this room: {exc}")
             return
+        # Updating a set with a dict adds its keys: the token names.
         self.state.inventory.update(self.state.tokens)
         for line in output:
             self.transcript.say(line)

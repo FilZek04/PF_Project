@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from escaperoom.utils import decodeValue, parseConfig, solve_dns
+from escaperoom.utils import decode_value, parse_config, solve_dns
 
 
 def b64(text):
@@ -26,7 +26,7 @@ class DnsTests(unittest.TestCase):
         return self.path
 
     def test_parse_config_skips_comments_and_strips_spaces(self):
-        entries, malformed = parseConfig(self.write([
+        entries, malformed = parse_config(self.write([
             "# comment=ignored",
             "  hint1 = b64:abc  ",
             "env=lab",
@@ -36,22 +36,23 @@ class DnsTests(unittest.TestCase):
         self.assertEqual(malformed, 1)
 
     def test_parse_config_splits_value_at_first_equals(self):
-        entries, _ = parseConfig(self.write(["hint1=b64:Zm9v=="]))
+        entries, _ = parse_config(self.write(["hint1=b64:Zm9v=="]))
         self.assertEqual(entries["hint1"], "b64:Zm9v==")
 
     def test_decode_b64(self):
-        self.assertEqual(decodeValue("b64:Mw=="), ("b64", "3"))
+        self.assertEqual(decode_value("b64:Mw=="), ("b64", "3"))
 
     def test_decode_rot13_b64_reverses_pipeline(self):
         sentence = "The code is not in the roots but near the closet."
-        self.assertEqual(decodeValue(rot13_b64(sentence)), ("rot13+b64", sentence))
+        self.assertEqual(decode_value(rot13_b64(sentence)), ("rot13+b64", sentence))
 
     def test_rot13_payload_is_not_plain_b64(self):
         sentence = "The code is not in the roots but near the closet."
         payload = rot13_b64(sentence).split(":", 1)[1]
         try:
-            _, text = decodeValue("b64:" + payload)
+            _, text = decode_value("b64:" + payload)
         except ValueError:
+            # Failing to decode also shows it is not plain Base64.
             return
         self.assertNotEqual(text, sentence)
 
@@ -65,7 +66,7 @@ class DnsTests(unittest.TestCase):
         for value in bad:
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
-                    decodeValue(value)
+                    decode_value(value)
 
     def test_solve_dns_uses_token_tag_not_first_valid_hint(self):
         result = solve_dns(self.write([

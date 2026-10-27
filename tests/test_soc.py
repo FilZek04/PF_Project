@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from escaperoom.utils import LOG_PATTERN, parseLogs, solve_soc
+from escaperoom.utils import LOG_PATTERN, parse_logs, solve_soc
 
 
 def failed(ip, host="lab1"):
@@ -25,14 +25,14 @@ class SocTests(unittest.TestCase):
 
     def test_valid_failed_line_is_grouped_by_subnet(self):
         line = failed("203.0.113.42")
-        wellformed, malformed, failures, samples = parseLogs(self.write([line]), LOG_PATTERN)
+        wellformed, malformed, failures, samples = parse_logs(self.write([line]), LOG_PATTERN)
         self.assertEqual(wellformed, 1)
         self.assertEqual(malformed, 0)
         self.assertEqual(failures, {"203.0.113": {"203.0.113.42": 1}})
         self.assertEqual(samples, {"203.0.113": line})
 
     def test_accepted_lines_are_not_failures(self):
-        wellformed, malformed, failures, _ = parseLogs(self.write([accepted("203.0.113.42")]), LOG_PATTERN)
+        wellformed, malformed, failures, _ = parse_logs(self.write([accepted("203.0.113.42")]), LOG_PATTERN)
         self.assertEqual(wellformed, 1)
         self.assertEqual(malformed, 0)
         self.assertEqual(failures, {})
@@ -50,7 +50,7 @@ class SocTests(unittest.TestCase):
         ]
         for line in bad:
             with self.subTest(line=line):
-                wellformed, malformed, failures, _ = parseLogs(self.write([line]), LOG_PATTERN)
+                wellformed, malformed, failures, _ = parse_logs(self.write([line]), LOG_PATTERN)
                 self.assertEqual(wellformed, 0)
                 self.assertEqual(malformed, 1)
                 self.assertEqual(failures, {})

@@ -1,9 +1,11 @@
 import re
 
+# Tag prefix such as TOKEN[SAFE]= or EVIDENCE[PID].PATH= (spec §6).
 TAG_RE = re.compile(r"^[A-Z_]+(\[[A-Z0-9]+\])?(\.[A-Z0-9_]+)?=")
 
 
 class Transcript:
+    """Collect the game output and write run.txt when the game ends."""
 
     def __init__(self, path: str):
         self.path = path
@@ -17,6 +19,8 @@ class Transcript:
         print(text)
         for line in text.splitlines():
             match = TAG_RE.match(line)
+            # Tags go in a dict so each one is written once, with its
+            # latest value, even if a room is inspected again.
             if match:
                 key = line[:match.end() - 1]
                 self.tags[key] = line[match.end():]

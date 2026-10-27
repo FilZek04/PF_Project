@@ -1,4 +1,4 @@
-from escaperoom.utils import parseGate, buildMessage, computeHmac
+from escaperoom.utils import parse_gate, build_message, compute_hmac
 from escaperoom.rooms.base import Room
 
 
@@ -8,12 +8,12 @@ class FinalRoom(Room):
         self.data_path = f"{data_dir}/final_gate.txt"
 
     def solve(self, state):
-        group_id, order, key = parseGate(self.data_path)
-        message = buildMessage(group_id, order, state.tokens)
+        group_id, order, key = parse_gate(self.data_path)
+        message = build_message(group_id, order, state.tokens)
         collected = ", ".join(f"{name}={state.tokens[name]}" for name in order)
         return [
             f"Collected tokens: {collected}",
             "FINAL_GATE=PENDING",
             f"MSG={message}",
-            f"HMAC={computeHmac(key, message)}",
+            f"HMAC={compute_hmac(key, message)}",
         ]
